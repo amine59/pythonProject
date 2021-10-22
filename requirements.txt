@@ -5,5 +5,5 @@ pandas
 seaborn
 matplotlib
 plotly
-sklearn.*
+sklearn
 statsmodels
