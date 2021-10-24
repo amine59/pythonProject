@@ -10,6 +10,7 @@ import plotly.offline as py
 import plotly.express as px
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 import sys
 from pandas.errors import ParserError
@@ -24,7 +25,9 @@ class application_stlit:
         self.y = lit_dataframe[[self.feat_y]]
         self.feat_x = lit_dataframe[self.features]
         self.x = self.feat_x.drop(self.y, 1)
-        return self.x , self.y
+        self.z = lit_dataframe.iloc[:, 5].values
+        self.h = lit_dataframe[self.features]
+        return self.x, self.y, self.z, self.h
 
     def file_selector(self):
         file = st.sidebar.file_uploader("choisir un fichier CSV ", type="csv")
@@ -47,44 +50,57 @@ class application_stlit:
         elif self.type == "Classification":
             self.chosen_classifier = st.sidebar.selectbox("veuillez choisir l'algorithme",
                                                           ('Logistic Regression', 'Naive Bayes'))
+            self.Iries_To_Predict = []
+            for self.fats in self.features:
+                self.h1 = st.slider(str(self.fats), 0, 10)
+                self.Iries_To_Predict.append(self.h1)
+            #st.write(self.Iries_To_Predict)
         elif self.type == "Clustering":
             pass
 
     def predict(self, predict_btn):
         if self.type == "Regression":
             if self.chosen_classifier == 'Linear Regression':
-                st.write("Prevision OLS")
+                st.markdown("***Prevision OLS***")
+                st.markdown('model is **Y = β0 + β1X + ε**.')
+                st.write('Y:', self.features[0])
+                st.write('X:', self.features[1])
                 fig, ax = plt.subplots(figsize=(25,7))
                 sns.regplot(x=self.x, y=self.y, fit_reg=True)
                 st.pyplot(fig)
-                #self.model_linReg = LinearRegression()
-                #self.model = self.model_linReg.fit(self.x, self.y)
-                #self.precision = self.model_linReg.score(self.x, self.y)
-                #self.longueur = 2.5
-                #self.prediction = self.model_linReg.predict([[self.longueur]])
-                #st.write(self.precision * 100)
-                #st.write(self.prediction)
                 self.X = sm.add_constant(self.x)
                 self.model = sm.OLS(self.y, self.X)
                 self.results = self.model.fit()
                 st.write(self.results.summary())
-                self.longueur = 2.5
+                self.longueur = st.number_input('Enter a number')
                 self.prediction = self.model.predict(self.longueur)[0]
-                st.write("Prevision pour une longueur = 2.5")
+                st.write("Prevision d'une longueur pour une largeur = ", self.longueur)
                 st.write(self.prediction)
+            if self.chosen_classifier == 'Random Forest':
+                from sklearn.datasets import load_iris
+                iris = load_iris()
+                model = RandomForestClassifier(n_estimators=10)
+                model.fit(iris.data, iris.target)
+                # Extract single tree
+                estimator = model.estimators_[5]
 
+                from sklearn.tree import export_graphviz
+                # Export as dot file
+                a = export_graphviz(estimator, out_file='tree.dot',
+                                feature_names=iris.feature_names,
+                                class_names=iris.target_names,
+                                rounded=True, proportion=False,
+                                precision=2, filled=True)
+                st.write(a)
         elif self.type == "Classification":
             if self.chosen_classifier == 'Logistic Regression':
                 self.alg = LogisticRegression()
-                self.Y = app.dataframe.iloc[:, 5].values
-                self.X = app.dataframe.iloc[:, [1,2,3, 4]].values
                 self.logreg = LogisticRegression(C=1e5)
-                self.model = self.logreg.fit(self.X, self.Y)
-                self.Iries_To_Predict = [
-                    [5.5, 2.5, 5.5, 6.5],
-                    [7, 3, 5, 6]
-                ]
-                self.pred = self.model.predict(self.Iries_To_Predict)
+                self.model = self.logreg.fit(self.h, self.z)
+                #self.pred = self.model.predict(self.Iries_To_Predict)
+
+                st.write(np.array(self.Iries_To_Predict).reshape(1, -1))
+                self.pred = self.model.predict(np.array(self.Iries_To_Predict).reshape(1, -1))
                 st.write(self.pred)
 
 
