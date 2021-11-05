@@ -17,7 +17,7 @@ from pandas.errors import ParserError
 import time
 import statsmodels.api as sm
 
-st.title('Machine Learning AMARIS example')
+st.title('Machine Learning AMARIS DEMO')
 
 class application_stlit:
     def prepare_data(self, lit_dataframe):
